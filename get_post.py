@@ -17,6 +17,8 @@ def on_intent(intent_request, session):
 
     if intent_name == "Get":
         return get_posts(intent)
+    else:
+        return handle_session_end_request()
 
 def on_session_ended(session_ended_request, session):
     print "Ending session."
