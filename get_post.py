@@ -48,13 +48,13 @@ def get_posts(intent):
     card_title = "Reddit Headlines"
     reprompt_text = ""
     should_end_session = True
-    if "Count" in intent["slots"]:
+    if "Count" in intent["slots"] and "value" in intent["slots"]["Count"]:
         limit = int(intent["slots"]["Count"]["value"])
         if limit > 30:
             limit = 30
     else:
         limit = 1
-    output = ""
+    output = "Getting top " + str(limit) + " posts. "
     count = 1
     for submission in reddit.subreddit('all').hot(limit=limit):
         output += str(count) + '. To ' + str(submission.subreddit) + ': ' + str(submission.title) + '. '
