@@ -65,6 +65,7 @@ def get_posts(intent):
     for submission in reddit.subreddit('all').hot(limit=limit):
         output += str(count) + '. To ' + str(submission.subreddit) + ': ' + str(submission.title) + '. '
         count += 1
+    output += " Would you like to hear the content of any of these posts?"
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
 
@@ -101,7 +102,7 @@ def get_content(intent):
         output = "This post is not a self post. I can only read self posts."
     else:
         output = str(final_submission.selftext)
-
+    output += " Would you like to hear the output of any other posts?"
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
 
