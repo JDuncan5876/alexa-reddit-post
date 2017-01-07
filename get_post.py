@@ -17,6 +17,10 @@ def on_intent(intent_request, session):
 
     if intent_name == "Get":
         return get_posts(intent)
+    elif intent_name == "Continue":
+        return continue_prompt()
+    elif intent_name == "GetContent":
+        return get_content(intent)
     else:
         return handle_session_end_request()
 
@@ -48,8 +52,8 @@ def get_posts(intent):
                          user_agent='scrapes titles from top posts to /r/all',
                          username='reddit-scraper-45')
     card_title = "Reddit Headlines"
-    reprompt_text = ""
-    should_end_session = True
+    reprompt_text = "Would you like to hear the content of any of these posts?"
+    should_end_session = False
     try:
         limit = int(intent["slots"]["Count"]["value"])
     except:
@@ -63,6 +67,44 @@ def get_posts(intent):
         count += 1
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
+
+def continue_prompt():
+    session_attributes = {}
+    card_title = "Reddit Headlines"
+    output = ""
+    reprompt_text = "Which post would you like to hear?"
+    should_end_session = False
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, output, reprompt_text, should_end_session))
+
+def get_content(intent):
+    session_attributes = {}
+    reddit = praw.Reddit(client_id='8MhFkN6PtwLipA',
+                         client_secret='8SCcMwepKyRu_yEgwsZYSd8kSIs',
+                         password=">.9Z6~_'eTqR7;%W",
+                         user_agent='scrapes titles from top posts to /r/all',
+                         username='reddit-scraper-45')
+    card_title = "Reddit Headlines"
+    reprompt_text = "Would you like to hear the content of another post?"
+    should_end_session = False
+    try:
+        post_num = int(intent["slots"]["PostNumber"]["value"])
+    except:
+        post_num = 1
+    if post_num < 1 or post_num > 30:
+        post_num = 1
+
+    for submission in reddit.subreddit('all').hot(limit=post_num):
+        final_submission = submission
+
+    if final_submission.selftext == "":
+        output = "This post is not a self post. I can only read self posts."
+    else:
+        output = str(final_submission.selftext)
+
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, output, reprompt_text, should_end_session))
+
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {
