@@ -49,7 +49,7 @@ def get_posts(intent):
     reddit = praw.Reddit(client_id='8MhFkN6PtwLipA',
                          client_secret='8SCcMwepKyRu_yEgwsZYSd8kSIs',
                          password=">.9Z6~_'eTqR7;%W",
-                         user_agent='scrapes titles from top posts to /r/all',
+                         user_agent='scrapes titles from top posts to reddit',
                          username='reddit-scraper-45')
     card_title = "Reddit Headlines"
     reprompt_text = "Would you like to hear the content of any of these posts?"
@@ -58,11 +58,15 @@ def get_posts(intent):
         limit = int(intent["slots"]["Count"]["value"])
     except:
         limit = 1
+    try:
+        sub = str(intent["slots"]["Subreddit"]["value"])
+    except:
+        sub = "all"
     if limit > 30:
         limit = 30
-    output = "Getting top " + str(limit) + " posts. "
+    output = "Getting top " + str(limit) + " posts from " + sub + ". "
     count = 1
-    for submission in reddit.subreddit('all').hot(limit=limit):
+    for submission in reddit.subreddit(sub).hot(limit=limit):
         output += str(count) + '. To ' + str(submission.subreddit) + ': ' + str(submission.title) + '. '
         count += 1
     output += " Would you like to hear the content of any of these posts?"
@@ -83,7 +87,7 @@ def get_content(intent):
     reddit = praw.Reddit(client_id='8MhFkN6PtwLipA',
                          client_secret='8SCcMwepKyRu_yEgwsZYSd8kSIs',
                          password=">.9Z6~_'eTqR7;%W",
-                         user_agent='scrapes titles from top posts to /r/all',
+                         user_agent='scrapes titles from top posts to reddit',
                          username='reddit-scraper-45')
     card_title = "Reddit Headlines"
     reprompt_text = "Would you like to hear the content of another post?"
@@ -94,14 +98,19 @@ def get_content(intent):
         post_num = 1
     if post_num < 1 or post_num > 30:
         post_num = 1
-
-    for submission in reddit.subreddit('all').hot(limit=post_num):
+    try:
+        sub = str(intent["slots"]["Subreddit"]["value"])
+    except:
+        sub = "all"
+    for submission in reddit.subreddit(sub).hot(limit=post_num):
         final_submission = submission
 
+    output = "Getting post " + str(post_num) + " from " + sub + ", "
+    output += "titled " + final_submission.title.encode('ascii', 'ignore')
     if final_submission.selftext == "":
-        output = "This post is not a self post. I can only read self posts."
+        output += "This post is not a self post. I can only read self posts."
     else:
-        output = str(final_submission.selftext)
+        output += final_submission.selftext.encode('ascii', 'ignore')
     output += " Would you like to hear the output of any other posts?"
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
