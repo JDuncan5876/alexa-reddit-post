@@ -67,7 +67,10 @@ def get_posts(intent):
     output = "Getting top " + str(limit) + " posts from " + sub + ". "
     count = 1
     for submission in reddit.subreddit(sub).hot(limit=limit):
-        output += str(count) + '. To ' + str(submission.subreddit) + ': ' + str(submission.title) + '. '
+        output += str(count) + '. '
+        if sub == 'all':
+            output += 'To ' + str(submission.subreddit) + ': '
+        output += str(submission.title) + '. '
         count += 1
     output += " Would you like to hear the content of any of these posts?"
     return build_response(session_attributes, build_speechlet_response(
@@ -106,7 +109,7 @@ def get_content(intent):
         final_submission = submission
 
     output = "Getting post " + str(post_num) + " from " + sub + ", "
-    output += "titled " + final_submission.title.encode('ascii', 'ignore')
+    output += "titled " + final_submission.title.encode('ascii', 'ignore') + '. '
     if final_submission.selftext == "":
         output += "This post is not a self post. I can only read self posts."
     else:
