@@ -59,7 +59,7 @@ def get_posts(intent):
     except:
         limit = 1
     try:
-        sub = str(intent["slots"]["Subreddit"]["value"])
+        sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
     if limit > 30:
@@ -70,7 +70,7 @@ def get_posts(intent):
         output += str(count) + '. '
         if sub == 'all':
             output += 'To ' + str(submission.subreddit) + ': '
-        output += str(submission.title) + '. '
+        output += submission.title.encode('ascii', 'ignore') + '. '
         count += 1
     output += " Would you like to hear the content of any of these posts?"
     return build_response(session_attributes, build_speechlet_response(
@@ -102,7 +102,7 @@ def get_content(intent):
     if post_num < 1 or post_num > 30:
         post_num = 1
     try:
-        sub = str(intent["slots"]["Subreddit"]["value"])
+        sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
     for submission in reddit.subreddit(sub).hot(limit=post_num):
