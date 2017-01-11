@@ -1,4 +1,5 @@
 import praw
+import re
 
 def lambda_handler(event, context):
     if event["request"]["type"] == "LaunchRequest":
@@ -73,6 +74,8 @@ def get_posts(intent):
         output += submission.title.encode('ascii', 'ignore') + '. '
         count += 1
     output += " Would you like to hear the content of any of these posts?"
+    output = re.sub(r'^https?:\/\/.*[\r\n]*', '', output, flags=re.MULTILINE)
+    output = re.sub(r'(\[[^\]]*\])(\([^\]]*\))', r'\1', output)
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
 
@@ -115,6 +118,8 @@ def get_content(intent):
     else:
         output += final_submission.selftext.encode('ascii', 'ignore')
     output += " Would you like to hear the output of any other posts?"
+    output = re.sub(r'(\[[^\]]*\])(\([^\]]*\))', r'\1', output)
+    output = re.sub(r'http[^ \n]*', ' ', output)
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
 
