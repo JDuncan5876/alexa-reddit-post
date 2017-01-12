@@ -47,11 +47,11 @@ def get_welcome_response():
 
 def get_posts(intent):
     session_attributes = {}
-    reddit = praw.Reddit(client_id='8MhFkN6PtwLipA',
-                         client_secret='8SCcMwepKyRu_yEgwsZYSd8kSIs',
+    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
+                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
                          password=">.9Z6~_'eTqR7;%W",
-                         user_agent='scrapes titles from top posts to reddit',
-                         username='reddit-scraper-45')
+                         user_agent="scrapes titles from top posts to reddit",
+                         username="reddit-scraper-45")
     card_title = "Reddit Headlines"
     reprompt_text = "Would you like to hear the content of any of these posts?"
     should_end_session = False
@@ -69,9 +69,9 @@ def get_posts(intent):
     count = 1
     for submission in reddit.subreddit(sub).hot(limit=limit):
         output += str(count) + '. '
-        if sub == 'all':
-            output += 'To ' + str(submission.subreddit) + ': '
-        output += submission.title.encode('ascii', 'ignore') + '. '
+        if sub == "all":
+            output += "To " + str(submission.subreddit) + ": "
+        output += submission.title.encode("ascii", "ignore") + ". "
         count += 1
     output += " Would you like to hear the content of any of these posts?"
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
@@ -89,11 +89,11 @@ def continue_prompt():
 
 def get_content(intent):
     session_attributes = {}
-    reddit = praw.Reddit(client_id='8MhFkN6PtwLipA',
-                         client_secret='8SCcMwepKyRu_yEgwsZYSd8kSIs',
+    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
+                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
                          password=">.9Z6~_'eTqR7;%W",
-                         user_agent='scrapes titles from top posts to reddit',
-                         username='reddit-scraper-45')
+                         user_agent="scrapes titles from top posts to reddit",
+                         username="reddit-scraper-45")
     card_title = "Reddit Headlines"
     reprompt_text = "Would you like to hear the content of another post?"
     should_end_session = False
