@@ -66,6 +66,7 @@ def get_posts(intent):
     if limit > 30:
         limit = 30
     output = "Getting top " + str(limit) + " posts from " + sub + ". "
+    card_output = output
     count = 1
     for submission in reddit.subreddit(sub).hot(limit=limit):
         output += str(count) + '. '
@@ -76,7 +77,7 @@ def get_posts(intent):
     output += " Would you like to hear the content of any of these posts?"
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
     return build_response(session_attributes, build_speechlet_response(
-        card_title, output, reprompt_text, should_end_session))
+        card_title, output, reprompt_text, should_end_session, card_output))
 
 def continue_prompt():
     session_attributes = {}
@@ -112,6 +113,7 @@ def get_content(intent):
 
     output = "Getting post " + str(post_num) + " from " + sub + ", "
     output += "titled " + final_submission.title.encode('ascii', 'ignore') + '. '
+    card_output = output
     if final_submission.selftext == "":
         output += "This post is not a self post. I can only read self posts."
     else:
@@ -119,10 +121,14 @@ def get_content(intent):
     output += " Would you like to hear the output of any other posts?"
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
     return build_response(session_attributes, build_speechlet_response(
-        card_title, output, reprompt_text, should_end_session))
+        card_title, output, reprompt_text, should_end_session, card_output))
 
 
-def build_speechlet_response(title, output, reprompt_text, should_end_session):
+def build_speechlet_response(title, output, reprompt_text, should_end_session, card_output=None):
+    if len(output) > 8000:
+        output = output[:7900] + ". I'm sorry, I can't read any more. Would you like to hear something else?"
+    if card_output == None:
+        card_output = output
     return {
         "outputSpeech": {
             "type": "PlainText",
@@ -131,7 +137,7 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session):
         "card": {
             "type": "Simple",
             "title": title,
-            "content": output
+            "content": card_output
         },
         "reprompt": {
             "outputSpeech": {
