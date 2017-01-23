@@ -19,9 +19,9 @@ def on_intent(intent_request, session):
     if intent_name == "Get":
         return get_posts(intent)
     elif intent_name == "Continue":
-        return continue_prompt()
+        return handle_continue_request(session)
     elif intent_name == "GetContent":
-        return get_content(intent)
+        return handle_get_content_request(intent, session)
     else:
         return handle_session_end_request()
 
@@ -36,7 +36,7 @@ def handle_session_end_request():
     return build_response({}, build_speechlet_response(card_title, speech_output, None, should_end_session))
 
 def get_welcome_response():
-    session_attributes = {}
+    session_attributes = {"LastState": "Launch"}
     card_title = "Reddit Headlines"
     speech_output = "Welcome to Reddit Headlines. " \
                     "Ask me for the top posts on reddit right now."
@@ -46,7 +46,7 @@ def get_welcome_response():
         card_title, speech_output, reprompt_text, should_end_session))
 
 def get_posts(intent):
-    session_attributes = {}
+    session_attributes = {"LastState": "Get"}
     reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
                          client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
                          password=">.9Z6~_'eTqR7;%W",
@@ -79,8 +79,17 @@ def get_posts(intent):
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session, card_output))
 
+def handle_continue_request(session):
+    if session["attributes"]["LastState"] == "GetContent":
+        content_status = int(session["attributes"]["get_content_status"])
+        post_num = int(session["attributes"]["post_number"])
+        sub = str(session["attributes"]["subreddit"])
+        return get_content(post_num, content_status, sub)
+    else:
+        return continue_prompt()
+
 def continue_prompt():
-    session_attributes = {}
+    session_attributes = {"LastState": "Continue"}
     card_title = "Reddit Headlines"
     output = ""
     reprompt_text = "Which post would you like to hear?"
@@ -88,16 +97,7 @@ def continue_prompt():
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session))
 
-def get_content(intent):
-    session_attributes = {}
-    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
-                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
-                         password=">.9Z6~_'eTqR7;%W",
-                         user_agent="scrapes titles from top posts to reddit",
-                         username="reddit-scraper-45")
-    card_title = "Reddit Headlines"
-    reprompt_text = "Would you like to hear the content of another post?"
-    should_end_session = False
+def handle_get_content_request(intent, session):
     try:
         post_num = int(intent["slots"]["PostNumber"]["value"])
     except:
@@ -108,6 +108,18 @@ def get_content(intent):
         sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
+    return get_content(post_num, 0, sub)
+
+
+def get_content(post_num, content_status, sub):
+    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
+                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
+                         password=">.9Z6~_'eTqR7;%W",
+                         user_agent="scrapes titles from top posts to reddit",
+                         username="reddit-scraper-45")
+    card_title = "Reddit Headlines"
+    reprompt_text = ""
+    should_end_session = False
     for submission in reddit.subreddit(sub).hot(limit=post_num):
         final_submission = submission
 
@@ -120,13 +132,20 @@ def get_content(intent):
         output += final_submission.selftext.encode('ascii', 'ignore')
     output += " Would you like to hear the output of any other posts?"
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
+    output = output[content_status * 5000:]
+    if len(output) > 8000:
+        output = output[:5000 + content_status * 5000] + ". I'm sorry, I can't read any more. Would you like to hear more?"
+        session_attributes = {"get_content_status": content_status + 1,
+            "post_number": post_num, #TODO: Make this based on post ID rather than order number
+            "subreddit": sub,
+            "LastState": "GetContent"}
+    else:
+        session_attributes = {"LastState": "Continue"} # TODO retain subreddit for continue prompt
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session, card_output))
 
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session, card_output=None):
-    if len(output) > 8000:
-        output = output[:7900] + ". I'm sorry, I can't read any more. Would you like to hear something else?"
     if card_output == None:
         card_output = output
     return {
