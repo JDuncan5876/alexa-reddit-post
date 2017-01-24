@@ -82,9 +82,14 @@ def get_posts(intent):
 def handle_continue_request(session):
     if session["attributes"]["LastState"] == "GetContent":
         content_status = int(session["attributes"]["get_content_status"])
-        post_num = int(session["attributes"]["post_number"])
-        sub = str(session["attributes"]["subreddit"])
-        return get_content(post_num, content_status, sub)
+        post_id = str(session["attributes"]["post_id"])
+        reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
+                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
+                         password=">.9Z6~_'eTqR7;%W",
+                         user_agent="scrapes titles from top posts to reddit",
+                         username="reddit-scraper-45")
+        submission = reddit.submission(post_id)
+        return get_content(submission, content_status)
     else:
         return continue_prompt()
 
@@ -108,39 +113,41 @@ def handle_get_content_request(intent, session):
         sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
-    return get_content(post_num, 0, sub)
-
-
-def get_content(post_num, content_status, sub):
     reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
                          client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
                          password=">.9Z6~_'eTqR7;%W",
                          user_agent="scrapes titles from top posts to reddit",
                          username="reddit-scraper-45")
+    for submission in reddit.subreddit(sub).hot(limit=post_num):
+        final_submission = submission
+    return get_content(final_submission, 0, post_num)
+
+
+def get_content(submission, content_status, post_num=None):
     card_title = "Reddit Headlines"
     reprompt_text = ""
     should_end_session = False
-    for submission in reddit.subreddit(sub).hot(limit=post_num):
-        final_submission = submission
-
-    output = "Getting post " + str(post_num) + " from " + sub + ", "
-    output += "titled " + final_submission.title.encode('ascii', 'ignore') + '. '
-    card_output = output
-    if final_submission.selftext == "":
-        output += "This post is not a self post. I can only read self posts."
+    if submission.selftext == "":
+        output = "This post is not a self post. I can only read self posts."
     else:
-        output += final_submission.selftext.encode('ascii', 'ignore')
-    output += " Would you like to hear the output of any other posts?"
+        output = submission.selftext.encode('ascii', 'ignore')
+    output += " Would you like to hear the output of any other posts?" #TODO: fix bug where this and continue prompt appears
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
     output = output[content_status * 5000:]
-    if len(output) > 8000:
+    if len(output) > 6000:
         output = output[:5000 + content_status * 5000] + ". I'm sorry, I can't read any more. Would you like to hear more?"
         session_attributes = {"get_content_status": content_status + 1,
-            "post_number": post_num, #TODO: Make this based on post ID rather than order number
-            "subreddit": sub,
+            "post_id": submission.id,
             "LastState": "GetContent"}
     else:
-        session_attributes = {"LastState": "Continue"} # TODO retain subreddit for continue prompt
+        session_attributes = {"LastState": "Continue"}
+    if content_status == 0:
+        intro = "Getting post " + str(post_num) + " from " + str(submission.subreddit) + ", "
+        intro += "titled " + submission.title.encode('ascii', 'ignore') + '. '
+        output = intro + output
+        card_output = intro
+    else:
+        card_output = ""
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session, card_output))
 
