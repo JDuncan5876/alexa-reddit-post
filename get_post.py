@@ -1,6 +1,12 @@
 import praw
 import re
 
+reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
+                     client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
+                     password=">.9Z6~_'eTqR7;%W",
+                     user_agent="scrapes titles from top posts to reddit",
+                     username="reddit-scraper-45")
+
 def lambda_handler(event, context):
     if event["request"]["type"] == "LaunchRequest":
         return on_launch(event["request"], event["session"])
@@ -47,11 +53,6 @@ def get_welcome_response():
 
 def get_posts(intent):
     session_attributes = {"LastState": "Get"}
-    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
-                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
-                         password=">.9Z6~_'eTqR7;%W",
-                         user_agent="scrapes titles from top posts to reddit",
-                         username="reddit-scraper-45")
     card_title = "Reddit Headlines"
     reprompt_text = "Would you like to hear the content of any of these posts?"
     should_end_session = False
@@ -83,11 +84,6 @@ def handle_continue_request(session):
     if session["attributes"]["LastState"] == "GetContent":
         content_status = int(session["attributes"]["get_content_status"])
         post_id = str(session["attributes"]["post_id"])
-        reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
-                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
-                         password=">.9Z6~_'eTqR7;%W",
-                         user_agent="scrapes titles from top posts to reddit",
-                         username="reddit-scraper-45")
         submission = reddit.submission(post_id)
         return get_content(submission, content_status)
     else:
@@ -113,11 +109,6 @@ def handle_get_content_request(intent, session):
         sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
-    reddit = praw.Reddit(client_id="8MhFkN6PtwLipA",
-                         client_secret="8SCcMwepKyRu_yEgwsZYSd8kSIs",
-                         password=">.9Z6~_'eTqR7;%W",
-                         user_agent="scrapes titles from top posts to reddit",
-                         username="reddit-scraper-45")
     for submission in reddit.subreddit(sub).hot(limit=post_num):
         final_submission = submission
     return get_content(final_submission, 0, post_num)
