@@ -82,7 +82,7 @@ def get_posts(intent):
 
 def handle_continue_request(session):
     if session["attributes"]["LastState"] == "GetContent":
-        content_status = int(session["attributes"]["get_content_status"])
+        content_status = int(session["attributes"]["status"])
         post_id = str(session["attributes"]["post_id"])
         submission = reddit.submission(post_id)
         return get_content(submission, content_status)
@@ -126,8 +126,8 @@ def get_content(submission, content_status, post_num=None):
     output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
     output = output[content_status * 5000:]
     if len(output) > 6000:
-        output = output[:5000 + content_status * 5000] + ". I'm sorry, I can't read any more. Would you like to hear more?"
-        session_attributes = {"get_content_status": content_status + 1,
+        output = output[:5000 + content_status * 5000] + ". Would you like to hear more?"
+        session_attributes = {"status": content_status + 1,
             "post_id": submission.id,
             "LastState": "GetContent"}
     else:
