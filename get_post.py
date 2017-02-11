@@ -66,17 +66,20 @@ def get_posts(intent):
         sub = "all"
     if limit > 30:
         limit = 30
-    output = "Getting top " + str(limit) + " posts from " + sub + ". "
-    card_output = output
-    count = 1
-    for submission in reddit.subreddit(sub).hot(limit=limit):
-        output += str(count) + '. '
-        if sub == "all":
-            output += "To " + str(submission.subreddit) + ": "
-        output += submission.title.encode("ascii", "ignore") + ". "
-        count += 1
-    output += " Would you like to hear the content of any of these posts?"
-    output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
+    try:
+        output = "Getting top " + str(limit) + " posts from " + sub + ". "
+        card_output = output
+        count = 1
+        for submission in reddit.subreddit(sub).hot(limit=limit):
+            output += str(count) + '. '
+            if sub == "all":
+                output += "To " + str(submission.subreddit) + ": "
+            output += submission.title.encode("ascii", "ignore") + ". "
+            count += 1
+        output += " Would you like to hear the content of any of these posts?"
+        output = re.sub(r'\(?http[^ \n)]*\)?', '', output)
+    except:
+        output = "Sorry, I think I misheard you."
     return build_response(session_attributes, build_speechlet_response(
         card_title, output, reprompt_text, should_end_session, card_output))
 
@@ -109,9 +112,14 @@ def handle_get_content_request(intent, session):
         sub = str(intent["slots"]["Subreddit"]["value"]).replace(" ", "")
     except:
         sub = "all"
-    for submission in reddit.subreddit(sub).hot(limit=post_num):
-        final_submission = submission
-    return get_content(final_submission, 0, post_num)
+    try:
+        for submission in reddit.subreddit(sub).hot(limit=post_num):
+            final_submission = submission
+        return get_content(final_submission, 0, post_num)
+    except:
+        output = "Sorry, I think I misheard you."
+        return build_response({}, build_speechlet_response(
+            "Error", output, "Could you repeat that?", False, output))
 
 
 def get_content(submission, content_status, post_num=None):
